@@ -1,0 +1,236 @@
+openapi: 3.0.0
+info:
+  title: Physician Compensation Management API
+  version: 1.0.0
+  description: API for managing physician compensation and productivity data
+
+servers:
+  - url: https://api.physician-comp.example.com/v1
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Provider:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - type
+        - specialty
+      properties:
+        id:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        type:
+          type: string
+          enum: [PHYSICIAN, NP, PA]
+        specialty:
+          type: string
+        npi:
+          type: string
+          pattern: '^\d{10}$'
+
+    Contract:
+      type: object
+      required:
+        - providerId
+        - startDate
+        - terms
+      properties:
+        id:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        terms:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTerm'
+
+    ContractTerm:
+      type: object
+      required:
+        - type
+        - amount
+        - frequency
+      properties:
+        type:
+          type: string
+          enum: [base, bonus, wRVU, quality]
+        amount:
+          type: number
+          minimum: 0
+        frequency:
+          type: string
+          enum: [annual, monthly, quarterly]
+        conditions:
+          type: object
+          properties:
+            metric:
+              type: string
+            threshold:
+              type: number
+            calculation:
+              type: string
+
+paths:
+  /providers:
+    get:
+      summary: List providers
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: organizationId
+          schema:
+            type: string
+        - in: query
+          name: specialty
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+    
+    post:
+      summary: Create a new provider
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+      responses:
+        '201':
+          description: Provider created
+
+  /contracts:
+    get:
+      summary: List contracts
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: providerId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contract'
+    
+    post:
+      summary: Create a new contract
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+      responses:
+        '201':
+          description: Contract created
+
+  /productivity/sync:
+    post:
+      summary: Sync productivity data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - providerId
+                - startDate
+                - endDate
+              properties:
+                providerId:
+                  type: string
+                  format: uuid
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Productivity data synced
+
+  /reports/provider/{providerId}:
+    get:
+      summary: Get provider report
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: providerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: startDate
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Provider report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    $ref: '#/components/schemas/Provider'
+                  productivity:
+                    type: object
+                  compensation:
+                    type: object
+                  marketComparison:
+                    type: object
