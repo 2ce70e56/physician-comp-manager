@@ -15,3 +15,77 @@ model Organization {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 }
+
+model Provider {
+  id              String        @id @default(cuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  firstName       String
+  lastName        String
+  type            ProviderType
+  specialty       String
+  npi             String?       @unique
+  email           String?
+  phone           String?
+  contracts       Contract[]
+  productivity    Productivity[]
+  compensations   Compensation[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum ProviderType {
+  PHYSICIAN
+  NP
+  PA
+}
+
+model Contract {
+  id              String        @id @default(cuid())
+  providerId      String
+  provider        Provider      @relation(fields: [providerId], references: [id])
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  startDate       DateTime
+  endDate         DateTime?
+  terms           Json
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Productivity {
+  id              String        @id @default(cuid())
+  providerId      String
+  provider        Provider      @relation(fields: [providerId], references: [id])
+  period          DateTime
+  wRVUs           Float
+  encounters      Int
+  charges         Float?
+  collections     Float?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Compensation {
+  id              String        @id @default(cuid())
+  providerId      String
+  provider        Provider      @relation(fields: [providerId], references: [id])
+  period          DateTime
+  amount          Float
+  type            String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model MarketData {
+  id              String        @id @default(cuid())
+  specialty       String
+  metric          String
+  value           Float
+  percentile      Float
+  year            Int
+  region          String?
+  source          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
