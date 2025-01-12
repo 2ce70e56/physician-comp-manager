@@ -1,12 +1,13 @@
+import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Navigation from '../components/layout/Navigation'
+import { Header } from '@/components/layout/header'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'Physician Compensation Management',
-  description: 'Comprehensive physician compensation and productivity tracking',
+export const metadata: Metadata = {
+  title: 'Physician Compensation Manager',
+  description: 'Modern physician compensation and productivity tracking',
 }
 
 export default function RootLayout({
@@ -15,10 +16,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head />
       <body className={inter.className}>
-        <Navigation />
-        {children}
+        <div className="relative min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   )

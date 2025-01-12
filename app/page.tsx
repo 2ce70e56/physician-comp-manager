@@ -1,28 +1,65 @@
-import { redirect } from 'next/navigation';
-import { Card, Title, Text } from '@tremor/react';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
+import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from '@/components/ui/layout'
 
-export default async function Home() {
+export default function Home() {
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <Title>Physician Compensation Management</Title>
-      <Text>Welcome to your compensation management dashboard.</Text>
-      
-      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <Title>Providers</Title>
-          <Text>Manage your providers and their compensation details.</Text>
-        </Card>
+    <Container>
+      <Section>
+        <PageHeader>
+          <div>
+            <PageHeaderHeading>Welcome to CompManager</PageHeaderHeading>
+            <PageHeaderDescription>
+              Modern physician compensation and productivity management
+            </PageHeaderDescription>
+          </div>
+        </PageHeader>
 
-        <Card>
-          <Title>Contracts</Title>
-          <Text>View and manage provider contracts.</Text>
-        </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Providers</CardTitle>
+              <CardDescription>
+                Manage physicians and advanced practice providers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link href="/providers">View Providers</Link>
+              </Button>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <Title>Analytics</Title>
-          <Text>View compensation and productivity analytics.</Text>
-        </Card>
-      </div>
-    </main>
-  );
+          <Card>
+            <CardHeader>
+              <CardTitle>Contracts</CardTitle>
+              <CardDescription>
+                Handle compensation agreements and terms
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link href="/contracts">View Contracts</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics</CardTitle>
+              <CardDescription>
+                Track productivity and compensation metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link href="/analytics">View Analytics</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Section>
+    </Container>
+  )
 }
