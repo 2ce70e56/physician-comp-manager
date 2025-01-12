@@ -23,6 +23,11 @@ export default function ReportsPage() {
     { id: 'contract_summary', name: 'Contract Summary' }
   ];
 
+  const handleGenerateReport = () => {
+    // Logic to generate the report based on selectedReport and date
+    console.log('Generating report:', selectedReport, date);
+  };
+
   return (
     <Container>
       <Section>
@@ -59,8 +64,8 @@ export default function ReportsPage() {
 
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline">
-                    {date ? format(date, 'PPP') : 'Pick a date'}
+                  <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+                    {date ? format(date, 'PPP') : <span className="text-muted-foreground">Pick a date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -68,12 +73,11 @@ export default function ReportsPage() {
                     mode="single"
                     selected={date}
                     onSelect={setDate}
-                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
 
-              <Button>
+              <Button onClick={handleGenerateReport}>
                 Generate Report
               </Button>
             </div>
