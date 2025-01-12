@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Card,
-  Title,
-  Text,
-  Select,
-  SelectItem,
-  BarChart,
-  Grid,
-  Col
-} from '@tremor/react';
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 interface MarketComparisonProps {
   specialtyData?: {
@@ -32,62 +35,104 @@ export const MarketComparison: React.FC<MarketComparisonProps> = ({ specialtyDat
     (!selectedRegion || d.region === selectedRegion)
   );
 
-  const chartData = filteredData.map(d => ({
-    specialty: d.specialty,
-    'Median Compensation': d.medianComp,
-    '25th Percentile': d.p25Comp,
-    '75th Percentile': d.p75Comp,
-  }));
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(value);
+  };
 
   return (
-    <Card className="mt-6">
-      <Title>Market Compensation Comparison</Title>
-      <Text>Compare compensation across specialties and regions</Text>
-      
-      <Grid numItems={2} className="gap-4 mt-4">
-        <Col>
-          <Select
-            value={selectedSpecialty}
-            onValueChange={setSelectedSpecialty}
-            placeholder="Select Specialty"
-          >
-            {specialties.map((specialty) => (
-              <SelectItem key={specialty} value={specialty}>
-                {specialty}
-              </SelectItem>
-            ))}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Market Compensation Comparison</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Select onValueChange={setSelectedSpecialty} value={selectedSpecialty}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Specialty" />
+            </SelectTrigger>
+            <SelectContent>
+              {specialties.map((specialty) => (
+                <SelectItem key={specialty} value={specialty}>
+                  {specialty}
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
-        </Col>
-        <Col>
-          <Select
-            value={selectedRegion}
-            onValueChange={setSelectedRegion}
-            placeholder="Select Region"
-          >
-            {regions.map((region) => (
-              <SelectItem key={region} value={region}>
-                {region}
-              </SelectItem>
-            ))}
-          </Select>
-        </Col>
-      </Grid>
 
-      <BarChart
-        className="mt-6"
-        data={chartData}
-        index="specialty"
-        categories={['25th Percentile', 'Median Compensation', '75th Percentile']}
-        colors={['blue', 'teal', 'indigo']}
-        valueFormatter={(number) => 
-          new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0
-          }).format(number)
-        }
-        yAxisWidth={104}
-      />
+          <Select onValueChange={setSelectedRegion} value={selectedRegion}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Region" />
+            </SelectTrigger>
+            <SelectContent>
+              {regions.map((region) => (
+                <SelectItem key={region} value={region}>
+                  {region}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="h-96 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={filteredData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="specialty" />
+              <YAxis 
+                tickFormatter={formatCurrency}
+                domain={['auto', 'auto']}
+              />
+              <Tooltip formatter={formatCurrency} />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="medianComp" 
+                stroke="#2563eb" 
+                name="Median Compensation" 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="p25Comp" 
+                stroke="#9333ea" 
+                name="25th Percentile" 
+              />
+              <Line 
+                type="monotone" 
+                dataKey="p75Comp" 
+                stroke="#16a34a" 
+                name="75th Percentile" 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <Table className="mt-6">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Specialty</TableHead>
+              <TableHead>Region</TableHead>
+              <TableHead>25th Percentile</TableHead>
+              <TableHead>Median</TableHead>
+              <TableHead>75th Percentile</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredData.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell>{row.specialty}</TableCell>
+                <TableCell>{row.region}</TableCell>
+                <TableCell>{formatCurrency(row.p25Comp)}</TableCell>
+                <TableCell>{formatCurrency(row.medianComp)}</TableCell>
+                <TableCell>{formatCurrency(row.p75Comp)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
     </Card>
   );
 };
