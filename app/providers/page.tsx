@@ -1,173 +1,83 @@
-'use client';
-
-import { useState } from 'react';
-import { Card, Title, Text, Button, TextInput, Select, SelectItem } from '@tremor/react';
-import { useRouter } from 'next/navigation';
+import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from "@/components/ui/layout"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { Plus } from "lucide-react"
+import { DataTable } from "@/components/ui/data-table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
 export default function ProvidersPage() {
-  const [providers, setProviders] = useState([
+  // Sample data - replace with real data
+  const providers = [
     {
-      id: '1',
-      firstName: 'John',
-      lastName: 'Doe',
-      type: 'PHYSICIAN',
-      specialty: 'Cardiology',
-      npi: '1234567890'
-    }
-    // Add more sample providers here
-  ]);
-
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newProvider, setNewProvider] = useState({
-    firstName: '',
-    lastName: '',
-    type: 'PHYSICIAN',
-    specialty: '',
-    npi: ''
-  });
-
-  const specialties = [
-    'Cardiology',
-    'Internal Medicine',
-    'Family Medicine',
-    'Surgery',
-    'Pediatrics',
-    'Orthopedics',
-    'Neurology'
-  ];
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Add API call here
-    setProviders([...providers, { ...newProvider, id: Date.now().toString() }]);
-    setShowAddForm(false);
-    setNewProvider({
-      firstName: '',
-      lastName: '',
-      type: 'PHYSICIAN',
-      specialty: '',
-      npi: ''
-    });
-  };
+      id: "1",
+      name: "Dr. John Smith",
+      type: "PHYSICIAN",
+      specialty: "Cardiology",
+      status: "Active",
+    },
+    // Add more sample providers
+  ]
 
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Title>Providers</Title>
-          <Text>Manage your organization's providers and their compensation details.</Text>
+    <Container>
+      <Section>
+        <PageHeader>
+          <div>
+            <PageHeaderHeading>Providers</PageHeaderHeading>
+            <PageHeaderDescription>
+              Manage physicians and advanced practice providers.
+            </PageHeaderDescription>
+          </div>
+          <Button asChild>
+            <Link href="/providers/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Provider
+            </Link>
+          </Button>
+        </PageHeader>
+        <div className="mt-8">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Specialty</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {providers.map((provider) => (
+                <TableRow key={provider.id}>
+                  <TableCell className="font-medium">{provider.name}</TableCell>
+                  <TableCell>{provider.type}</TableCell>
+                  <TableCell>{provider.specialty}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={provider.status === "Active" ? "success" : "secondary"}
+                    >
+                      {provider.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" asChild>
+                      <Link href={`/providers/${provider.id}`}>View</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-        <Button onClick={() => setShowAddForm(true)}>Add Provider</Button>
-      </div>
-      
-      {showAddForm && (
-        <Card className="mb-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <TextInput
-                placeholder="First Name"
-                value={newProvider.firstName}
-                onChange={(e) => setNewProvider({ ...newProvider, firstName: e.target.value })}
-                required
-              />
-              <TextInput
-                placeholder="Last Name"
-                value={newProvider.lastName}
-                onChange={(e) => setNewProvider({ ...newProvider, lastName: e.target.value })}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
-                value={newProvider.type}
-                onValueChange={(value) => setNewProvider({ ...newProvider, type: value })}
-                required
-              >
-                <SelectItem value="PHYSICIAN">Physician</SelectItem>
-                <SelectItem value="NP">Nurse Practitioner</SelectItem>
-                <SelectItem value="PA">Physician Assistant</SelectItem>
-              </Select>
-
-              <Select
-                value={newProvider.specialty}
-                onValueChange={(value) => setNewProvider({ ...newProvider, specialty: value })}
-                required
-              >
-                {specialties.map((specialty) => (
-                  <SelectItem key={specialty} value={specialty}>
-                    {specialty}
-                  </SelectItem>
-                ))}
-              </Select>
-            </div>
-
-            <TextInput
-              placeholder="NPI Number"
-              value={newProvider.npi}
-              onChange={(e) => setNewProvider({ ...newProvider, npi: e.target.value })}
-            />
-
-            <div className="flex justify-end space-x-4">
-              <Button variant="secondary" onClick={() => setShowAddForm(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Save Provider</Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      <Card>
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Specialty
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                NPI
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {providers.map((provider) => (
-              <tr key={provider.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {provider.firstName} {provider.lastName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {provider.type}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {provider.specialty}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {provider.npi}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <Button
-                    size="xs"
-                    variant="secondary"
-                    onClick={() => window.location.href = `/providers/${provider.id}`}
-                  >
-                    View
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
-    </main>
-  );
+      </Section>
+    </Container>
+  )
 }
