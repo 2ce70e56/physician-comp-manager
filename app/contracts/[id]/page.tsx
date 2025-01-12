@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Title, Text, Grid, Metric, Button, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@tremor/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from '@/components/ui/layout';
 
 export default function ContractPage({ params }: { params: { id: string } }) {
   const [contract] = useState({
@@ -31,170 +35,192 @@ export default function ContractPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <div className="md:flex md:justify-between md:items-center mb-6">
-        <div>
-          <Title>Contract Details</Title>
-          <Text>Contract for {contract.provider.name}</Text>
-        </div>
-        <div className="mt-4 md:mt-0 space-x-4">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => window.location.href = `/providers/${contract.provider.id}`}
-          >
-            View Provider
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => window.location.href = `/contracts/${contract.id}/edit`}
-          >
-            Edit Contract
-          </Button>
-        </div>
-      </div>
+    <Container>
+      <Section>
+        <PageHeader>
+          <div>
+            <PageHeaderHeading>Contract Details</PageHeaderHeading>
+            <PageHeaderDescription>
+              Contract for {contract.provider.name}
+            </PageHeaderDescription>
+          </div>
+          <div className="flex space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = `/providers/${contract.provider.id}`}
+            >
+              View Provider
+            </Button>
+            <Button
+              onClick={() => window.location.href = `/contracts/${contract.id}/edit`}
+            >
+              Edit Contract
+            </Button>
+          </div>
+        </PageHeader>
 
-      <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6">
-        <Card>
-          <Text>Contract Status</Text>
-          <Metric>{contract.status}</Metric>
-          <Text className="mt-2">
-            {new Date(contract.startDate).toLocaleDateString()} - {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Ongoing'}
-          </Text>
-        </Card>
-
-        <Card>
-          <Text>Annual Base Value</Text>
-          <Metric>${calculateAnnualValue().toLocaleString()}</Metric>
-          <Text className="mt-2">Base + Quality Incentives</Text>
-        </Card>
-
-        <Card>
-          <Text>wRVU Rate</Text>
-          <Metric>${contract.terms.find(t => t.type === 'wRVU')?.amount || 0}/wRVU</Metric>
-          <Text className="mt-2">Above {contract.terms.find(t => t.type === 'wRVU')?.threshold.toLocaleString()} wRVUs</Text>
-        </Card>
-      </Grid>
-
-      <TabGroup className="mt-6">
-        <TabList>
-          <Tab>Compensation Terms</Tab>
-          <Tab>Quality Metrics</Tab>
-          <Tab>Payment Schedule</Tab>
-        </TabList>
-
-        <TabPanels>
-          <TabPanel>
+        <div className="grid gap-6 mt-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <Title>Compensation Structure</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frequency</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <CardHeader>
+                <CardTitle>Contract Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge className="mb-2">{contract.status}</Badge>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(contract.startDate).toLocaleDateString()} - 
+                  {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Ongoing'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Annual Base Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  ${calculateAnnualValue().toLocaleString()}
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">Base + Quality Incentives</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>wRVU Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  ${contract.terms.find(t => t.type === 'wRVU')?.amount || 0}/wRVU
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Above {contract.terms.find(t => t.type === 'wRVU')?.threshold.toLocaleString()} wRVUs
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="terms" className="mt-6">
+            <TabsList>
+              <TabsTrigger value="terms">Compensation Terms</TabsTrigger>
+              <TabsTrigger value="quality">Quality Metrics</TabsTrigger>
+              <TabsTrigger value="schedule">Payment Schedule</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="terms">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compensation Structure</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
                     {contract.terms.map((term, index) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap capitalize">{term.type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          ${term.amount.toLocaleString()}
-                          {term.type === 'wRVU' && ' per wRVU'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap capitalize">{term.frequency}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {term.type === 'wRVU' && `Threshold: ${term.threshold.toLocaleString()} wRVUs`}
-                          {term.type === 'quality' && (
-                            <ul className="list-disc list-inside">
-                              {term.metrics.map((metric, i) => (
-                                <li key={i} className="capitalize">{metric}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
-                      </tr>
+                      <div key={index} className="border-b pb-4 last:border-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold capitalize">{term.type}</h4>
+                            <p className="text-sm text-muted-foreground capitalize">{term.frequency}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">
+                              ${term.amount.toLocaleString()}
+                              {term.type === 'wRVU' && ' per wRVU'}
+                            </div>
+                            {term.threshold && (
+                              <p className="text-sm text-muted-foreground">
+                                Threshold: {term.threshold.toLocaleString()} wRVUs
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabPanel>
-            <Card>
-              <Title>Quality Metrics and Targets</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Metric</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Target</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="bg-white">
-                      <td className="px-6 py-4 whitespace-nowrap">Patient Satisfaction</td>
-                      <td className="px-6 py-4 whitespace-nowrap">≥ 90%</td>
-                      <td className="px-6 py-4 whitespace-nowrap">92%</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-green-600">On Track</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">Quality Measures</td>
-                      <td className="px-6 py-4 whitespace-nowrap">≥ 85%</td>
-                      <td className="px-6 py-4 whitespace-nowrap">83%</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-yellow-600">At Risk</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
+            <TabsContent value="quality">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quality Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="grid gap-4">
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <h4 className="font-semibold">Patient Satisfaction</h4>
+                          <p className="text-sm text-muted-foreground">Target: ≥ 90%</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">92%</div>
+                          <Badge variant="success">On Track</Badge>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <h4 className="font-semibold">Quality Measures</h4>
+                          <p className="text-sm text-muted-foreground">Target: ≥ 85%</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">83%</div>
+                          <Badge variant="secondary">At Risk</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabPanel>
-            <Card>
-              <Title>Payment Schedule</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Component</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frequency</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Next Payment</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="bg-white">
-                      <td className="px-6 py-4 whitespace-nowrap">Base Salary</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Monthly</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Feb 1, 2025</td>
-                      <td className="px-6 py-4 whitespace-nowrap">${(250000 / 12).toLocaleString()}</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">wRVU Bonus</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Quarterly</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Apr 1, 2025</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Variable</td>
-                    </tr>
-                    <tr className="bg-white">
-                      <td className="px-6 py-4 whitespace-nowrap">Quality Bonus</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Annual</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Jan 1, 2026</td>
-                      <td className="px-6 py-4 whitespace-nowrap">Up to $25,000</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
-    </main>
+            <TabsContent value="schedule">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Schedule</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <h4 className="font-semibold">Base Salary</h4>
+                          <p className="text-sm text-muted-foreground">Monthly Payment</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">${(250000 / 12).toLocaleString()}</div>
+                          <p className="text-sm text-muted-foreground">Next: Feb 1, 2025</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <h4 className="font-semibold">wRVU Bonus</h4>
+                          <p className="text-sm text-muted-foreground">Quarterly Payment</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">Variable</div>
+                          <p className="text-sm text-muted-foreground">Next: Apr 1, 2025</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+                        <div>
+                          <h4 className="font-semibold">Quality Bonus</h4>
+                          <p className="text-sm text-muted-foreground">Annual Payment</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">Up to $25,000</div>
+                          <p className="text-sm text-muted-foreground">Next: Jan 1, 2026</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </Section>
+    </Container>
   );
 }
