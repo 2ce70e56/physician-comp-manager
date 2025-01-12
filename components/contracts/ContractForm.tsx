@@ -1,84 +1,248 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Title, TextInput, NumberInput, Select, SelectItem, Button } from '@tremor/react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Card, Title, Button } from '@tremor/react';
+import { PlusIcon, TrashIcon } from 'lucide-react';
 
-interface ContractTerm {
-  type: 'base' | 'bonus' | 'wRVU' | 'quality';
-  amount: number;
-  frequency: 'annual' | 'monthly' | 'quarterly';
-  conditions?: {
-    metric?: string;
-    threshold?: number;
-    calculation?: string;
-  };
+// Validation schema
+const contractTermSchema = z.object({
+  type: z.enum(['base', 'wRVU', 'quality', 'bonus'], {
+    required_error: 'Term type is required'
+  }),
+  amount: z.number().min(0, 'Amount must be positive'),
+  frequency: z.enum(['annual', 'monthly', 'quarterly']),
+  threshold: z.number().min(0).optional(),
+  metric: z.string().optional(),
+  description: z.string().optional()
+});
+
+const contractSchema = z.object({
+  providerId: z.string().min(1, 'Provider is required'),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().optional(),
+  terms: z.array(contractTermSchema).min(1, 'At least one term is required')
+});
+
+type ContractFormData = z.infer<typeof contractSchema>;
+
+interface ContractFormProps {
+  initialData?: Partial<ContractFormData>;
+  providers: Array<{ id: string; name: string; specialty: string; }>;
+  onSubmit: (data: ContractFormData) => Promise<void>;
+  onCancel: () => void;
 }
 
-export default function ContractForm() {
-  const [terms, setTerms] = useState<ContractTerm[]>([]);
-  
-  const addTerm = () => {
-    setTerms([...terms, {
-      type: 'base',
-      amount: 0,
-      frequency: 'annual'
-    }]);
-  };
+export default function ContractForm({ initialData, providers, onSubmit, onCancel }: ContractFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // Submit logic here
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors }
+  } = useForm<ContractFormData>({
+    resolver: zodResolver(contractSchema),
+    defaultValues: initialData || {
+      terms: [{ type: 'base', frequency: 'annual', amount: 0 }]
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'terms'
+  });
+
+  const onFormSubmit = async (data: ContractFormData) => {
+    try {
+      setIsSubmitting(true);
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Error submitting contract:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card className="mt-6">
-        <Title>Contract Terms</Title>
-        
-        {terms.map((term, index) => (
-          <div key={index} className="space-y-4 mt-4">
-            <Select
-              value={term.type}
-              onValueChange={(value) => {
-                const newTerms = [...terms];
-                newTerms[index] = { ...term, type: value as ContractTerm['type'] };
-                setTerms(newTerms);
-              }}
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
+      <div className="form-section">
+        <h3 className="form-section-title">Contract Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="providerId" className="form-label">Provider</label>
+            <select
+              id="providerId"
+              className="form-select"
+              {...register('providerId')}
             >
-              <SelectItem value="base">Base Salary</SelectItem>
-              <SelectItem value="bonus">Bonus</SelectItem>
-              <SelectItem value="wRVU">wRVU Based</SelectItem>
-              <SelectItem value="quality">Quality Metrics</SelectItem>
-            </Select>
-            
-            <NumberInput
-              placeholder="Amount"
-              value={term.amount}
-              onChange={(value) => {
-                const newTerms = [...terms];
-                newTerms[index] = { ...term, amount: value };
-                setTerms(newTerms);
-              }}
-            />
-
-            <Select
-              value={term.frequency}
-              onValueChange={(value) => {
-                const newTerms = [...terms];
-                newTerms[index] = { ...term, frequency: value as ContractTerm['frequency'] };
-                setTerms(newTerms);
-              }}
-            >
-              <SelectItem value="annual">Annual</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="quarterly">Quarterly</SelectItem>
-            </Select>
+              <option value="">Select Provider</option>
+              {providers.map((provider) => (
+                <option key={provider.id} value={provider.id}>
+                  {provider.name} - {provider.specialty}
+                </option>
+              ))}
+            </select>
+            {errors.providerId && (
+              <p className="text-red-500 text-sm mt-1">{errors.providerId.message}</p>
+            )}
           </div>
+
+          <div>
+            <label htmlFor="startDate" className="form-label">Start Date</label>
+            <input
+              id="startDate"
+              type="date"
+              className="form-input"
+              {...register('startDate')}
+            />
+            {errors.startDate && (
+              <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="endDate" className="form-label">End Date (Optional)</label>
+            <input
+              id="endDate"
+              type="date"
+              className="form-input"
+              {...register('endDate')}
+            />
+            {errors.endDate && (
+              <p className="text-red-500 text-sm mt-1">{errors.endDate.message}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="form-section-title mb-0">Compensation Terms</h3>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => append({ type: 'base', frequency: 'annual', amount: 0 })}
+            icon={PlusIcon}
+          >
+            Add Term
+          </Button>
+        </div>
+
+        {fields.map((field, index) => (
+          <Card key={field.id} className="mb-4 p-4 bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="form-label">Type</label>
+                <select
+                  className="form-select"
+                  {...register(`terms.${index}.type`)}
+                >
+                  <option value="base">Base Salary</option>
+                  <option value="wRVU">wRVU Based</option>
+                  <option value="quality">Quality Bonus</option>
+                  <option value="bonus">Other Bonus</option>
+                </select>
+                {errors.terms?.[index]?.type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.terms[index].type?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="form-label">Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-input"
+                  {...register(`terms.${index}.amount`, { valueAsNumber: true })}
+                />
+                {errors.terms?.[index]?.amount && (
+                  <p className="text-red-500 text-sm mt-1">{errors.terms[index].amount?.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="form-label">Frequency</label>
+                <select
+                  className="form-select"
+                  {...register(`terms.${index}.frequency`)}
+                >
+                  <option value="annual">Annual</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                </select>
+                {errors.terms?.[index]?.frequency && (
+                  <p className="text-red-500 text-sm mt-1">{errors.terms[index].frequency?.message}</p>
+                )}
+              </div>
+
+              {watch(`terms.${index}.type`) === 'wRVU' && (
+                <div className="md:col-span-2">
+                  <label className="form-label">wRVU Threshold</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    {...register(`terms.${index}.threshold`, { valueAsNumber: true })}
+                  />
+                  {errors.terms?.[index]?.threshold && (
+                    <p className="text-red-500 text-sm mt-1">{errors.terms[index].threshold?.message}</p>
+                  )}
+                </div>
+              )}
+
+              {watch(`terms.${index}.type`) === 'quality' && (
+                <div className="md:col-span-2">
+                  <label className="form-label">Quality Metric</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    {...register(`terms.${index}.metric`)}
+                  />
+                  {errors.terms?.[index]?.metric && (
+                    <p className="text-red-500 text-sm mt-1">{errors.terms[index].metric?.message}</p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end md:col-span-2 lg:col-span-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  color="red"
+                  icon={TrashIcon}
+                  onClick={() => remove(index)}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          </Card>
         ))}
-        
-        <Button onClick={addTerm} className="mt-4">Add Term</Button>
-        <Button type="submit" className="mt-4 ml-4">Save Contract</Button>
-      </Card>
+        {errors.terms && (
+          <p className="text-red-500 text-sm mt-1">{errors.terms.message}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          loading={isSubmitting}
+          disabled={isSubmitting}
+        >
+          {initialData ? 'Update Contract' : 'Create Contract'}
+        </Button>
+      </div>
     </form>
   );
 }
