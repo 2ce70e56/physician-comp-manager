@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { Card, Title, Text, Button, Select, SelectItem } from '@tremor/react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
@@ -17,6 +21,7 @@ export const ProductivityImport: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processedData, setProcessedData] = useState<ProductivityData[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
 
   const validateData = (data: any[]): { isValid: boolean; errors: string[] } => {
     const requiredFields = ['physician', 'specialty', 'wRVUs', 'collections', 'visits', 'date'];
@@ -58,6 +63,11 @@ export const ProductivityImport: React.FC = () => {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
+        step: (results, parser) => {
+          // Update progress based on bytes processed
+          const progress = (parser.streamer.pos / file.size) * 100;
+          setProgress(Math.round(progress));
+        },
         complete: (results) => {
           const validation = validateData(results.data);
           if (validation.isValid) {
@@ -100,6 +110,7 @@ export const ProductivityImport: React.FC = () => {
 
     setIsProcessing(true);
     setErrors([]);
+    setProgress(0);
 
     try {
       const data = fileType === 'csv' 
@@ -107,6 +118,7 @@ export const ProductivityImport: React.FC = () => {
         : await processExcel(file);
       
       setProcessedData(data);
+      setProgress(100);
     } catch (error) {
       setErrors(Array.isArray(error) ? error : [String(error)]);
     } finally {
@@ -115,61 +127,70 @@ export const ProductivityImport: React.FC = () => {
   };
 
   return (
-    <Card className="mt-6">
-      <Title>Import Productivity Data</Title>
-      <Text>Upload physician productivity data from CSV or Excel files</Text>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Import Productivity Data</CardTitle>
+        <CardDescription>Upload physician productivity data from CSV or Excel files</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <div className="w-[240px]">
+            <Select value={fileType} onValueChange={(value: 'csv' | 'excel') => setFileType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select file type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="csv">CSV File</SelectItem>
+                <SelectItem value="excel">Excel File</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div className="mt-4">
-        <Select
-          value={fileType}
-          onValueChange={(value) => setFileType(value as 'csv' | 'excel')}
-          className="max-w-xs"
-        >
-          <SelectItem value="csv">CSV File</SelectItem>
-          <SelectItem value="excel">Excel File</SelectItem>
-        </Select>
-      </div>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <input
+              type="file"
+              accept={fileType === 'csv' ? '.csv' : '.xlsx,.xls'}
+              onChange={handleFileUpload}
+              className="cursor-pointer rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+          </div>
 
-      <div className="mt-4">
-        <input
-          type="file"
-          accept={fileType === 'csv' ? '.csv' : '.xlsx,.xls'}
-          onChange={handleFileUpload}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-        />
-      </div>
+          {isProcessing && (
+            <div className="space-y-2">
+              <Progress value={progress} className="w-full" />
+              <p className="text-sm text-gray-500">Processing file... {progress}%</p>
+            </div>
+          )}
 
-      {isProcessing && (
-        <div className="mt-4">
-          <Text>Processing file...</Text>
+          {errors.length > 0 && (
+            <Alert variant="destructive">
+              <AlertDescription>
+                <ul className="list-disc pl-4 space-y-1">
+                  {errors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {processedData.length > 0 && !isProcessing && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                Successfully processed {processedData.length} records
+              </p>
+              <Button
+                onClick={() => {
+                  // TODO: Implement save to database
+                  console.log('Saving data:', processedData);
+                }}
+              >
+                Save to Database
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-
-      {errors.length > 0 && (
-        <div className="mt-4 p-4 bg-red-50 rounded-md">
-          <Text className="text-red-700">Errors:</Text>
-          <ul className="list-disc pl-5 mt-2">
-            {errors.map((error, index) => (
-              <li key={index} className="text-red-600">{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {processedData.length > 0 && (
-        <div className="mt-4">
-          <Text>Successfully processed {processedData.length} records</Text>
-          <Button
-            className="mt-2"
-            onClick={() => {
-              // TODO: Implement save to database
-              console.log('Saving data:', processedData);
-            }}
-          >
-            Save to Database
-          </Button>
-        </div>
-      )}
+      </CardContent>
     </Card>
   );
 };
