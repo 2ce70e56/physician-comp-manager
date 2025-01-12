@@ -1,19 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from '@/components/ui/layout';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function MarketDataPage() {
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
@@ -52,153 +44,173 @@ export default function MarketDataPage() {
         p90: 10500
       }
     },
-    // Add more specialties
+    {
+      specialty: 'Internal Medicine',
+      compensation: {
+        p25: 220000,
+        p50: 260000,
+        p75: 300000,
+        p90: 350000
+      },
+      wRVUs: {
+        p25: 4500,
+        p50: 5000,
+        p75: 5500,
+        p90: 6000
+      }
+    }
   ];
 
-  const handleImportData = () => {
-    // Import functionality
-  };
-
-  const getChartData = () => {
-    const data = marketData.find(d => d.specialty === selectedSpecialty);
-    if (!data) return [];
-
-    const metricData = data[selectedMetric as keyof typeof data];
-    return [
-      { percentile: '25th', value: metricData.p25 },
-      { percentile: '50th', value: metricData.p50 },
-      { percentile: '75th', value: metricData.p75 },
-      { percentile: '90th', value: metricData.p90 }
-    ];
+  const formatValue = (value: number) => {
+    if (selectedMetric === 'compensation' || selectedMetric === 'collections') {
+      return `$${value.toLocaleString()}`;
+    }
+    return value.toLocaleString();
   };
 
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Market Data</h1>
-          <p className="text-muted-foreground">
-            Compare compensation and productivity against market benchmarks
-          </p>
-        </div>
-        <Button onClick={handleImportData}>Import Market Data</Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Market Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Specialty" />
-              </SelectTrigger>
-              <SelectContent>
-                {specialties.map((specialty) => (
-                  <SelectItem key={specialty} value={specialty}>
-                    {specialty}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Metric" />
-              </SelectTrigger>
-              <SelectContent>
-                {metrics.map((metric) => (
-                  <SelectItem key={metric.value} value={metric.value}>
-                    {metric.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-              </SelectContent>
-            </Select>
+    <Container>
+      <Section>
+        <PageHeader>
+          <div>
+            <PageHeaderHeading>Market Data</PageHeaderHeading>
+            <PageHeaderDescription>
+              Compare compensation and productivity against market benchmarks
+            </PageHeaderDescription>
           </div>
+          <Button>Import Market Data</Button>
+        </PageHeader>
 
-          {selectedSpecialty && selectedMetric && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Market Distribution</h2>
-              <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={getChartData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="percentile" />
-                    <YAxis
-                      tickFormatter={(value) => 
-                        selectedMetric === 'compensation' 
-                          ? `$${value.toLocaleString()}`
-                          : value.toLocaleString()
-                      }
-                    />
-                    <Tooltip
-                      formatter={(value) =>
-                        selectedMetric === 'compensation' 
-                          ? `$${value.toLocaleString()}`
-                          : value.toLocaleString()
-                      }
-                    />
-                    <Legend />
-                    <Bar dataKey="value" fill="#2563eb" name={metrics.find(m => m.value === selectedMetric)?.label} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Market Analysis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3 mb-6">
+              <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Specialty" />
+                </SelectTrigger>
+                <SelectContent>
+                  {specialties.map((specialty) => (
+                    <SelectItem key={specialty} value={specialty}>
+                      {specialty}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Metric" />
+                </SelectTrigger>
+                <SelectContent>
+                  {metrics.map((metric) => (
+                    <SelectItem key={metric.value} value={metric.value}>
+                      {metric.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2025">2025</SelectItem>
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2023">2023</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Market Data Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-muted">
-                <tr>
-                  <th scope="col" className="px-6 py-3">Specialty</th>
-                  <th scope="col" className="px-6 py-3">25th Percentile</th>
-                  <th scope="col" className="px-6 py-3">Median</th>
-                  <th scope="col" className="px-6 py-3">75th Percentile</th>
-                  <th scope="col" className="px-6 py-3">90th Percentile</th>
-                </tr>
-              </thead>
-              <tbody>
-                {marketData.map((data, index) => (
-                  <tr key={data.specialty} className={index % 2 === 0 ? 'bg-white' : 'bg-muted/50'}>
-                    <td className="px-6 py-4 font-medium">{data.specialty}</td>
-                    <td className="px-6 py-4">
-                      ${data[selectedMetric as keyof typeof data].p25.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      ${data[selectedMetric as keyof typeof data].p50.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      ${data[selectedMetric as keyof typeof data].p75.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      ${data[selectedMetric as keyof typeof data].p90.toLocaleString()}
-                    </td>
-                  </tr>
+            {selectedSpecialty && selectedMetric && (
+              <div className="space-y-6">
+                {marketData
+                  .filter(data => !selectedSpecialty || data.specialty === selectedSpecialty)
+                  .map(data => (
+                    <div key={data.specialty} className="space-y-2">
+                      <h3 className="text-lg font-semibold">{data.specialty}</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">25th Percentile</span>
+                          <span className="font-medium">
+                            {formatValue(data[selectedMetric as keyof typeof data].p25)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Median (50th)</span>
+                          <span className="font-medium">
+                            {formatValue(data[selectedMetric as keyof typeof data].p50)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">75th Percentile</span>
+                          <span className="font-medium">
+                            {formatValue(data[selectedMetric as keyof typeof data].p75)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">90th Percentile</span>
+                          <span className="font-medium">
+                            {formatValue(data[selectedMetric as keyof typeof data].p90)}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <div className="w-full bg-secondary h-2 rounded-full">
+                          <div 
+                            className="bg-primary h-full rounded-full transition-all" 
+                            style={{ width: '75%' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Market Data Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Specialty</TableHead>
+                  <TableHead>25th Percentile</TableHead>
+                  <TableHead>Median</TableHead>
+                  <TableHead>75th Percentile</TableHead>
+                  <TableHead>90th Percentile</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {marketData.map((data) => (
+                  <TableRow key={data.specialty}>
+                    <TableCell className="font-medium">{data.specialty}</TableCell>
+                    <TableCell>
+                      {formatValue(data[selectedMetric as keyof typeof data].p25)}
+                    </TableCell>
+                    <TableCell>
+                      {formatValue(data[selectedMetric as keyof typeof data].p50)}
+                    </TableCell>
+                    <TableCell>
+                      {formatValue(data[selectedMetric as keyof typeof data].p75)}
+                    </TableCell>
+                    <TableCell>
+                      {formatValue(data[selectedMetric as keyof typeof data].p90)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </main>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </Section>
+    </Container>
   );
 }
