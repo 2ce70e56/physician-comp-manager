@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, Title, Text, Grid, Metric, ProgressBar, TabGroup, TabList, Tab, TabPanels, TabPanel, Button } from '@tremor/react';
-import { LineChart, BarChart } from '@tremor/react';
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Container, PageHeader, PageHeaderHeading, Section } from '@/components/ui/layout';
 
 interface ProviderData {
   id: string;
@@ -16,7 +19,7 @@ interface ProviderData {
 }
 
 export default function ProviderPage({ params }: { params: { id: string } }) {
-  const [provider, setProvider] = useState<ProviderData>({ 
+  const [provider] = useState<ProviderData>({ 
     id: '1',
     firstName: 'John',
     lastName: 'Doe',
@@ -41,229 +44,179 @@ export default function ProviderPage({ params }: { params: { id: string } }) {
     ]
   });
 
-  const [selectedView, setSelectedView] = useState(0);
-
-  const productivityData = provider.productivity.map(p => ({
-    date: p.period,
-    "wRVUs": p.wRVUs,
-    "Encounters": p.encounters
-  }));
-
   const currentContract = provider.contracts[provider.contracts.length - 1];
   const totalCompensation = currentContract.terms.reduce((sum: number, term: any) => {
     if (term.type === 'base') return sum + term.amount;
     return sum;
   }, 0);
 
-  // Calculate YTD metrics
+  // Calculate metrics
   const ytdWRVUs = provider.productivity.reduce((sum, p) => sum + p.wRVUs, 0);
   const ytdEncounters = provider.productivity.reduce((sum, p) => sum + p.encounters, 0);
-  const wRVUTarget = 6000; // Example target
+  const wRVUTarget = 6000;
   const wRVUProgress = (ytdWRVUs / wRVUTarget) * 100;
 
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <Card className="mb-6">
-        <div className="md:flex md:justify-between md:items-center">
+    <Container>
+      <Section>
+        <PageHeader>
           <div>
-            <Title>{`${provider.firstName} ${provider.lastName}`}</Title>
-            <Text>{provider.specialty}</Text>
-            <Text className="text-gray-500">{provider.type}</Text>
-            {provider.npi && <Text className="text-gray-500">NPI: {provider.npi}</Text>}
+            <PageHeaderHeading>
+              {provider.firstName} {provider.lastName}
+            </PageHeaderHeading>
+            <div className="flex items-center space-x-2 mt-2">
+              <Badge>{provider.type}</Badge>
+              <Badge variant="outline">{provider.specialty}</Badge>
+            </div>
           </div>
-          <div className="mt-4 md:mt-0">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => window.location.href = `/providers/${provider.id}/edit`}
-            >
-              Edit Provider
-            </Button>
-          </div>
-        </div>
-      </Card>
+          <Button variant="outline" onClick={() => window.location.href = `/providers/${provider.id}/edit`}>
+            Edit Provider
+          </Button>
+        </PageHeader>
 
-      <TabGroup onIndexChange={setSelectedView}>
-        <TabList>
-          <Tab>Overview</Tab>
-          <Tab>Productivity</Tab>
-          <Tab>Compensation</Tab>
-          <Tab>Contracts</Tab>
-        </TabList>
+        <div className="grid gap-6 mt-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Annual Compensation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">${totalCompensation.toLocaleString()}</div>
+                <p className="text-sm text-muted-foreground mt-2">Base + Variable</p>
+              </CardContent>
+            </Card>
 
-        <TabPanels>
-          <TabPanel>
-            <Grid numItems={1} numItemsSm={2} numItemsLg={3} className="gap-6 mt-6">
-              <Card>
-                <Text>Annual Compensation</Text>
-                <Metric>${totalCompensation.toLocaleString()}</Metric>
-                <Text className="mt-2">Base + Variable</Text>
-              </Card>
-
-              <Card>
-                <Text>YTD wRVUs</Text>
-                <Metric>{ytdWRVUs.toLocaleString()}</Metric>
+            <Card>
+              <CardHeader>
+                <CardTitle>YTD wRVUs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{ytdWRVUs.toLocaleString()}</div>
                 <div className="mt-2">
-                  <Text>{`Progress to Target: ${Math.round(wRVUProgress)}%`}</Text>
-                  <ProgressBar value={wRVUProgress} className="mt-2" />
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Progress to Target: {Math.round(wRVUProgress)}%
+                  </p>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div 
+                      className="bg-primary h-full rounded-full transition-all" 
+                      style={{ width: `${Math.min(wRVUProgress, 100)}%` }}
+                    />
+                  </div>
                 </div>
-              </Card>
-
-              <Card>
-                <Text>YTD Encounters</Text>
-                <Metric>{ytdEncounters.toLocaleString()}</Metric>
-                <Text className="mt-2">Avg: {Math.round(ytdEncounters / provider.productivity.length)} per month</Text>
-              </Card>
-            </Grid>
-
-            <Card className="mt-6">
-              <Title>Productivity Trends</Title>
-              <LineChart
-                className="mt-4 h-72"
-                data={productivityData}
-                index="date"
-                categories={["wRVUs", "Encounters"]}
-                colors={["blue", "green"]}
-                yAxisWidth={40}
-                valueFormatter={(value: number) => value.toLocaleString()}
-              />
+              </CardContent>
             </Card>
-          </TabPanel>
 
-          <TabPanel>
-            <Grid numItems={1} numItemsSm={2} className="gap-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>YTD Encounters</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{ytdEncounters.toLocaleString()}</div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Avg: {Math.round(ytdEncounters / provider.productivity.length)} per month
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Tabs defaultValue="productivity" className="mt-6">
+            <TabsList>
+              <TabsTrigger value="productivity">Productivity</TabsTrigger>
+              <TabsTrigger value="compensation">Compensation</TabsTrigger>
+              <TabsTrigger value="contracts">Contracts</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="productivity">
               <Card>
-                <Title>Monthly wRVUs</Title>
-                <BarChart
-                  className="mt-4 h-72"
-                  data={productivityData}
-                  index="date"
-                  categories={["wRVUs"]}
-                  colors={["blue"]}
-                  yAxisWidth={40}
-                  valueFormatter={(value: number) => value.toLocaleString()}
-                />
-              </Card>
-
-              <Card>
-                <Title>Monthly Encounters</Title>
-                <BarChart
-                  className="mt-4 h-72"
-                  data={productivityData}
-                  index="date"
-                  categories={["Encounters"]}
-                  colors={["green"]}
-                  yAxisWidth={40}
-                  valueFormatter={(value: number) => value.toLocaleString()}
-                />
-              </Card>
-            </Grid>
-
-            <Card className="mt-6">
-              <Title>Productivity Details</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">wRVUs</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Encounters</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">wRVUs/Encounter</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {provider.productivity.map((p: any, index: number) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap">{p.period}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{p.wRVUs.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{p.encounters.toLocaleString()}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {(p.wRVUs / p.encounters).toFixed(2)}
-                        </td>
-                      </tr>
+                <CardHeader>
+                  <CardTitle>Productivity Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-8">
+                    {provider.productivity.map((data, index) => (
+                      <div key={index}>
+                        <div className="flex justify-between mb-2">
+                          <span>{data.period}</span>
+                          <span className="font-semibold">{data.wRVUs} wRVUs</span>
+                        </div>
+                        <div className="w-full bg-secondary h-2 rounded-full">
+                          <div 
+                            className="bg-primary h-full rounded-full" 
+                            style={{ 
+                              width: `${(data.wRVUs / Math.max(...provider.productivity.map(p => p.wRVUs))) * 100}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabPanel>
-            <Card className="mt-6">
-              <Title>Compensation Structure</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Frequency</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+            <TabsContent value="compensation">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compensation Structure</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
                     {currentContract.terms.map((term: any, index: number) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap capitalize">{term.type}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          ${term.amount.toLocaleString()}
-                          {term.type === 'wRVU' && ' per wRVU'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap capitalize">{term.frequency}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {term.type === 'wRVU' && `Threshold: ${term.threshold.toLocaleString()} wRVUs`}
-                        </td>
-                      </tr>
+                      <div key={index} className="border-b pb-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-semibold capitalize">{term.type}</h4>
+                            <p className="text-sm text-muted-foreground capitalize">{term.frequency}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">
+                              ${term.amount.toLocaleString()}
+                              {term.type === 'wRVU' && ' per wRVU'}
+                            </div>
+                            {term.threshold && (
+                              <p className="text-sm text-muted-foreground">
+                                Threshold: {term.threshold.toLocaleString()} wRVUs
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabPanel>
-            <Card className="mt-6">
-              <Title>Contract History</Title>
-              <div className="mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">End Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+            <TabsContent value="contracts">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contract History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
                     {provider.contracts.map((contract: any, index: number) => (
-                      <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {new Date(contract.startDate).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Ongoing'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {new Date(contract.endDate) > new Date() ? 'Active' : 'Expired'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Button
-                            size="xs"
-                            variant="secondary"
-                            onClick={() => window.location.href = `/contracts/${contract.id}`}
-                          >
-                            View
-                          </Button>
-                        </td>
-                      </tr>
+                      <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
+                        <div>
+                          <div className="font-semibold">
+                            {new Date(contract.startDate).toLocaleDateString()} - 
+                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString() : 'Ongoing'}
+                          </div>
+                          <Badge className="mt-1" variant={new Date(contract.endDate) > new Date() ? 'default' : 'secondary'}>
+                            {new Date(contract.endDate) > new Date() ? 'Active' : 'Expired'}
+                          </Badge>
+                        </div>
+                        <Button variant="ghost" onClick={() => window.location.href = `/contracts/${contract.id}`}>
+                          View
+                        </Button>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
-    </main>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </Section>
+    </Container>
   );
 }
