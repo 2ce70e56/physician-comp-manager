@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, Title, Text, BarChart, DonutChart, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@tremor/react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from '@/components/ui/layout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 export default function AnalyticsPage() {
   const [selectedView, setSelectedView] = useState(0);
@@ -29,74 +32,159 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <main className="p-4 md:p-10 mx-auto max-w-7xl">
-      <Title>Analytics Dashboard</Title>
-      <Text>Comprehensive view of compensation and productivity metrics.</Text>
+    <Container>
+      <Section>
+        <PageHeader>
+          <div>
+            <PageHeaderHeading>Analytics Dashboard</PageHeaderHeading>
+            <PageHeaderDescription>
+              Comprehensive view of compensation and productivity metrics.
+            </PageHeaderDescription>
+          </div>
+        </PageHeader>
 
-      <TabGroup className="mt-6" onIndexChange={setSelectedView}>
-        <TabList>
-          <Tab>Overview</Tab>
-          <Tab>Compensation</Tab>
-          <Tab>Productivity</Tab>
-        </TabList>
+        <Tabs defaultValue="overview" className="mt-6">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="compensation">Compensation</TabsTrigger>
+            <TabsTrigger value="productivity">Productivity</TabsTrigger>
+          </TabsList>
 
-        <TabPanels>
-          <TabPanel>
-            <div className="mt-6 grid gap-6 md:grid-cols-2">
-              <Card>
-                <Title>Provider Distribution</Title>
-                <DonutChart
-                  className="mt-6"
-                  data={providerTypeData}
-                  category="count"
-                  index="type"
-                  colors={['blue', 'cyan', 'indigo']}
-                />
-              </Card>
+          <TabsContent value="overview">
+            <div className="grid gap-6 mt-6">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Total Providers</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">{providerTypeData.reduce((sum, data) => sum + data.count, 0)}</div>
+                    <div className="flex gap-2 mt-2">
+                      {providerTypeData.map(data => (
+                        <Badge key={data.type} variant="secondary">
+                          {data.type}: {data.count}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <Title>Average Compensation by Specialty</Title>
-                <BarChart
-                  className="mt-6"
-                  data={compensationData}
-                  index="specialty"
-                  categories={['amount']}
-                  colors={['blue']}
-                  valueFormatter={(number) => `$${number.toLocaleString()}`}
-                />
-              </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Average Compensation</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      ${(compensationData.reduce((sum, data) => sum + data.amount, 0) / compensationData.length).toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Average wRVUs</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      {(productivityData.reduce((sum, data) => sum + data.wRVUs, 0) / productivityData.length).toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Compensation by Specialty</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {compensationData.map(data => (
+                        <div key={data.specialty} className="flex justify-between items-center">
+                          <div>{data.specialty}</div>
+                          <div className="font-semibold">${data.amount.toLocaleString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Productivity by Specialty</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {productivityData.map(data => (
+                        <div key={data.specialty} className="flex justify-between items-center">
+                          <div>{data.specialty}</div>
+                          <div className="font-semibold">{data.wRVUs.toLocaleString()} wRVUs</div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </TabPanel>
+          </TabsContent>
 
-          <TabPanel>
+          <TabsContent value="compensation">
             <Card className="mt-6">
-              <Title>Detailed Compensation Analysis</Title>
-              <BarChart
-                className="mt-6 h-72"
-                data={compensationData}
-                index="specialty"
-                categories={['amount']}
-                colors={['blue']}
-                valueFormatter={(number) => `$${number.toLocaleString()}`}
-              />
+              <CardHeader>
+                <CardTitle>Detailed Compensation Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {compensationData.map(data => (
+                    <div key={data.specialty} className="flex flex-col">
+                      <div className="flex justify-between mb-2">
+                        <span>{data.specialty}</span>
+                        <span className="font-semibold">${data.amount.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full bg-secondary h-2 rounded-full">
+                        <div 
+                          className="bg-primary h-full rounded-full" 
+                          style={{ 
+                            width: `${(data.amount / Math.max(...compensationData.map(d => d.amount))) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
-          </TabPanel>
+          </TabsContent>
 
-          <TabPanel>
+          <TabsContent value="productivity">
             <Card className="mt-6">
-              <Title>Productivity Metrics</Title>
-              <BarChart
-                className="mt-6 h-72"
-                data={productivityData}
-                index="specialty"
-                categories={['wRVUs']}
-                colors={['green']}
-                valueFormatter={(number) => number.toLocaleString()}
-              />
+              <CardHeader>
+                <CardTitle>Productivity Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {productivityData.map(data => (
+                    <div key={data.specialty} className="flex flex-col">
+                      <div className="flex justify-between mb-2">
+                        <span>{data.specialty}</span>
+                        <span className="font-semibold">{data.wRVUs.toLocaleString()} wRVUs</span>
+                      </div>
+                      <div className="w-full bg-secondary h-2 rounded-full">
+                        <div 
+                          className="bg-primary h-full rounded-full" 
+                          style={{ 
+                            width: `${(data.wRVUs / Math.max(...productivityData.map(d => d.wRVUs))) * 100}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
             </Card>
-          </TabPanel>
-        </TabPanels>
-      </TabGroup>
-    </main>
+          </TabsContent>
+        </Tabs>
+      </Section>
+    </Container>
   );
 }
