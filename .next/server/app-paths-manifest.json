@@ -1,9 +1,6 @@
 {
   "/not-found": "app/not-found.js",
-  "/contracts/page": "app/contracts/page.js",
-  "/page": "app/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
+  "/providers/new/page": "app/providers/new/page.js",
   "/providers/page": "app/providers/page.js",
-  "/analytics/page": "app/analytics/page.js",
-  "/market-data/page": "app/market-data/page.js"
+  "/contracts/page": "app/contracts/page.js"
 }

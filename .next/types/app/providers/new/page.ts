@@ -1,8 +1,8 @@
-// File: /Users/mlarson/sandbox/comp/physician-comp-manager/app/market-data/page.tsx
-import * as entry from '../../../../app/market-data/page.js'
+// File: /Users/mlarson/sandbox/comp/physician-comp-manager/app/providers/new/page.tsx
+import * as entry from '../../../../../app/providers/new/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../app/market-data/page.js')
+type TEntry = typeof import('../../../../../app/providers/new/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

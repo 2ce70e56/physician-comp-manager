@@ -1,148 +1,169 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Container, PageHeader, PageHeaderHeading, PageHeaderDescription, Section } from '@/components/ui/layout';
-import { Badge } from '@/components/ui/badge';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Progress } from '@/components/ui/progress';
 
 export default function DashboardPage() {
-  const stats = {
-    totalProviders: 142,
-    activeContracts: 138,
-    averageCompensation: 285000,
-    totalWRVUs: 685000,
-    recentActivity: [
-      { type: 'Contract Updated', provider: 'Dr. Sarah Chen', date: '2 hours ago' },
-      { type: 'Productivity Imported', provider: 'All Providers', date: '4 hours ago' },
-      { type: 'New Provider Added', provider: 'Dr. James Wilson', date: '1 day ago' },
-    ],
-    topPerformers: [
-      { name: 'Dr. Michael Brown', specialty: 'Cardiology', wRVUs: 8500 },
-      { name: 'Dr. Emily Davis', specialty: 'Surgery', wRVUs: 8200 },
-      { name: 'Dr. David Kim', specialty: 'Orthopedics', wRVUs: 7800 },
-    ]
+  const performanceData = [
+    { month: 'Jan', actual: 420, target: 400, collections: 125000 },
+    { month: 'Feb', actual: 380, target: 400, collections: 115000 },
+    { month: 'Mar', actual: 450, target: 400, collections: 135000 },
+    { month: 'Apr', actual: 410, target: 400, collections: 122000 },
+    { month: 'May', actual: 440, target: 400, collections: 130000 },
+    { month: 'Jun', actual: 425, target: 400, collections: 127000 }
+  ];
+
+  const specialtyDistribution = [
+    { specialty: 'Family Medicine', count: 15, totalCompensation: 3750000 },
+    { specialty: 'Internal Medicine', count: 12, totalCompensation: 3240000 },
+    { specialty: 'Cardiology', count: 8, totalCompensation: 4000000 },
+    { specialty: 'Orthopedics', count: 6, totalCompensation: 3600000 },
+    { specialty: 'Pediatrics', count: 10, totalCompensation: 2500000 }
+  ];
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(value);
   };
 
   return (
     <Container>
+      <PageHeader>
+        <PageHeaderHeading>Dashboard</PageHeaderHeading>
+        <PageHeaderDescription>
+          Physician compensation and productivity overview
+        </PageHeaderDescription>
+      </PageHeader>
+
       <Section>
-        <PageHeader>
-          <div>
-            <PageHeaderHeading>Dashboard</PageHeaderHeading>
-            <PageHeaderDescription>
-              Overview of your organization's performance metrics
-            </PageHeaderDescription>
-          </div>
-        </PageHeader>
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Physicians</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">51</div>
+              <p className="text-xs text-muted-foreground">
+                +3 from last month
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Average wRVUs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">425</div>
+              <p className="text-xs text-muted-foreground">
+                +6.2% above target
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Compensation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(17090000)}</div>
+              <p className="text-xs text-muted-foreground">
+                +8.3% from last year
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Active Contracts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">48</div>
+              <p className="text-xs text-muted-foreground">
+                3 pending renewal
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </Section>
 
-        <div className="grid gap-6 mt-6">
-          {/* Quick Stats */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Total Providers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalProviders}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Contracts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.activeContracts}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Average Compensation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">${stats.averageCompensation.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Total wRVUs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">{stats.totalWRVUs.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Top Performers and Recent Activity */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top Performers</CardTitle>
-                <CardDescription>Highest wRVU producers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {stats.topPerformers.map((performer, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{performer.name}</div>
-                        <div className="text-sm text-muted-foreground">{performer.specialty}</div>
-                      </div>
-                      <div className="font-medium">{performer.wRVUs.toLocaleString()} wRVUs</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Latest updates and changes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {stats.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start justify-between">
-                      <div>
-                        <Badge className="mb-1">{activity.type}</Badge>
-                        <div className="text-sm text-muted-foreground">{activity.provider}</div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">{activity.date}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Productivity Trends */}
+      <Section>
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Productivity Trends</CardTitle>
-              <CardDescription>wRVU production over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
-                Productivity chart will be displayed here
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="actual" stroke="#2563eb" name="Actual wRVUs" />
+                    <Line type="monotone" dataKey="target" stroke="#16a34a" strokeDasharray="5 5" name="Target" />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
 
-          {/* Compensation Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>Compensation Distribution</CardTitle>
-              <CardDescription>By specialty and provider type</CardDescription>
+              <CardTitle>Compensation by Specialty</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[200px] w-full flex items-center justify-center text-muted-foreground">
-                Compensation distribution chart will be displayed here
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={specialtyDistribution}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="specialty" />
+                    <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <Bar dataKey="totalCompensation" fill="#2563eb" name="Total Compensation" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </div>
+      </Section>
+
+      <Section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Provider Performance Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Above Target (120%+)</span>
+                  <span className="text-sm">12 providers</span>
+                </div>
+                <Progress value={24} className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">At Target (95-120%)</span>
+                  <span className="text-sm">28 providers</span>
+                </div>
+                <Progress value={55} className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">Below Target (&lt;95%)</span>
+                  <span className="text-sm">11 providers</span>
+                </div>
+                <Progress value={21} className="bg-muted" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </Section>
     </Container>
   );
